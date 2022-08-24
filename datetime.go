@@ -46,8 +46,24 @@ func (dt *Datetime) ToDate(format string) string {
 	tm := time.Unix(dt.timestamp, 0)
 	// 根据时区进行转换
 	if dt.timezone != nil {
-		cstZone := time.FixedZone("CST", *dt.timezone*3600)
+		cstZone := time.FixedZone("UTC", *dt.timezone*3600)
 		return tm.In(cstZone).Format(format)
 	}
 	return tm.Format(format)
+}
+
+// ToTime 时间转为时间戳
+func (dt *Datetime) ToTime(value string) (timestamp int64, err error) {
+	layout := "2006-01-02 15:04:05"
+	var lc *time.Location
+	if dt.timezone != nil {
+		lc = time.FixedZone("UTC", *dt.timezone*3600)
+	} else {
+		lc = time.Local
+	}
+	tm, err := time.ParseInLocation(layout, value, lc)
+	if err != nil {
+		return 0, err
+	}
+	return tm.Unix(), nil
 }
