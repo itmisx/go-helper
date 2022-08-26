@@ -10,21 +10,21 @@ import (
 	"github.com/itmisx/redisx"
 )
 
+var Client redisx.Client
+
 // 唯一键
-type UUID struct {
-	cli redisx.Client
-}
+type UUID struct{}
 
 // Init redis初始化连接池
-func (uuid *UUID) Init(conf redisx.Config) {
-	uuid.cli = redisx.New(conf)
+func (uuid UUID) Init(conf redisx.Config) {
+	Client = redisx.New(conf)
 }
 
-func (uuid *UUID) Int64() (ID int64, err error) {
+func (uuid UUID) Int64() (ID int64, err error) {
 	return uuid.getUniqueKey()
 }
 
-func (uuid *UUID) String() (ID string, err error) {
+func (uuid UUID) String() (ID string, err error) {
 	idInt, err := uuid.getUniqueKey()
 	if err != nil {
 		return "", err
@@ -33,7 +33,7 @@ func (uuid *UUID) String() (ID string, err error) {
 }
 
 // getUniqueKey 获取唯一主键
-func (uuid *UUID) getUniqueKey() (ID int64, err error) {
+func (uuid UUID) getUniqueKey() (ID int64, err error) {
 	times := 0
 	for {
 		// 最大尝试次数
@@ -50,7 +50,7 @@ func (uuid *UUID) getUniqueKey() (ID int64, err error) {
 		key := "primary_key:" + strconv.FormatInt(ID, 10)
 
 		// 判断id是否唯一
-		success, err := uuid.cli.SetNX(context.Background(), key, 1, time.Second*1).Result()
+		success, err := Client.SetNX(context.Background(), key, 1, time.Second*1).Result()
 		if !success || err != nil {
 			// 休眠1毫秒，避免最大尝试次数内获得的是同一个微妙
 			time.Sleep(time.Microsecond)
